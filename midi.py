@@ -12,6 +12,14 @@ import warnings
 num_notes = 96
 samples_per_measure = 96
 
+"""
+samples data structure
+
+axis0 -> bar (split of music)
+axis1 -> time
+axis2 -> note
+"""
+
 
 class MidiRunner:
     def __init__(self, file):
@@ -103,12 +111,10 @@ class MidiRunner:
                     sample[int(start_ix), int(note)] = 1
                     start_ix += 1
 
-                # sample[int(start_ix), int(note)] = 1
-
-        return samples
+        return np.array(samples)
 
     @staticmethod
-    def samples_to_midi(samples, file, ticks_per_beat, thresh=0.5):
+    def samples_to_midi(samples, file, ticks_per_beat=48, thresh=0.5):
         mid = MidiFile()
         track = MidiTrack()
         mid.tracks.append(track)
