@@ -63,7 +63,7 @@ class MidiRunner:
 
         return ppq, bpm, millis_per_tick, ticks_per_measure, has_multi_time_sig, has_multi_tempo
 
-    def midi_to_samples(self, ignore_time=True):
+    def midi_to_samples(self, ignore_time=False):
         # note_on channel=1 note=44 velocity=127 time=816
         # note_off channel=1 note=44 velocity=64 time=24
 
@@ -124,8 +124,8 @@ class MidiRunner:
 
         return np.array(samples)
 
-    def save_to_numpy(self,midi_file_path, out_dir):
-        samples = self.midi_to_samples()
+    def save_to_numpy(self,midi_file_path, out_dir, ignore_time=False):
+        samples = self.midi_to_samples(ignore_time=ignore_time)
 
         parent_dir_name = str(midi_file_path).replace('\\', '/').split('/')[-2]
         midi_name = str(midi_file_path).replace('\\', '/').split('/')[-1]

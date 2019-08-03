@@ -109,3 +109,4 @@ output/
 .idea/
 vgmusic_npy/*
 vgmusic_npy2/
+vgmusic_npy_point/*

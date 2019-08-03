@@ -5,14 +5,14 @@ import numpy as np
 
 from multiprocessing import Pool
 
-OUT_DIR = 'vgmusic_npy2'
+OUT_DIR = 'vgmusic_npy_point'
 MID_PATTERN = 'vgmusic/Nintendo 08 DS/**/*.mid'
 
 def use_multiprocess():
     os.makedirs(OUT_DIR, exist_ok=False)
     files = sorted(glob(MID_PATTERN, recursive=True))
 
-    pool = Pool(8)
+    pool = Pool(4)
     pool.map_async(save_single, files)
     pool.close()
     pool.join()
@@ -30,7 +30,7 @@ def save_to_npy():
 def save_single(midi_file):
     try:
         runner = midi.MidiRunner(midi_file)
-        runner.save_to_numpy(midi_file, OUT_DIR)
+        runner.save_to_numpy(midi_file, OUT_DIR, ignore_time=True)
     except Exception as e:
         print(e)
 
