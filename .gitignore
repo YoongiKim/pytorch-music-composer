@@ -107,3 +107,5 @@ downloads/
 vgmusic/*
 output/
 .idea/
+vgmusic_npy/*
+vgmusic_npy2/

@@ -8,6 +8,8 @@ from mido import MidiFile, MidiTrack, Message
 import numpy as np
 import math
 import warnings
+from glob import glob
+import os
 
 num_notes = 96
 samples_per_measure = 96
@@ -20,11 +22,11 @@ axis1 -> time
 axis2 -> note
 """
 
-
 class MidiRunner:
     def __init__(self, file):
         self.mid = MidiFile(file)
-        self.ppq, self.bpm, self.millis, self.ticks_per_measure = self.get_info()
+        self.ppq, self.bpm, self.millis, self.ticks_per_measure, self.multi_time_sig, self.multi_tempo\
+            = self.get_info()
         self.duration = self.mid.length
 
 
@@ -35,17 +37,21 @@ class MidiRunner:
 
         has_tempo = False
         has_time_sig = False
+        has_multi_tempo = False
+        has_multi_time_sig = False
 
-        for track_idx, track in enumerate(self.mid.tracks):
+        for track_idx, track in enumerate(self.mid.tracks[0:1]):
             for event_index, msg in enumerate(track):
                 if msg.type == 'set_tempo':
                     if has_tempo and msg.tempo != tempo:
+                        has_multi_tempo = True
                         warnings.warn("Detected multiple tempo.")
                     tempo = msg.tempo
                     has_tempo = True
 
                 if msg.type == 'time_signature':
                     if has_time_sig and time_sig != (msg.numerator / msg.denominator):
+                        has_multi_time_sig = True
                         warnings.warn("Detected multiple time signature.")
 
                     time_sig = msg.numerator / msg.denominator
@@ -55,9 +61,9 @@ class MidiRunner:
         millis_per_tick = 60000 / (bpm * ppq)
         ticks_per_measure = 4 * ppq * time_sig
 
-        return ppq, bpm, millis_per_tick, ticks_per_measure
+        return ppq, bpm, millis_per_tick, ticks_per_measure, has_multi_time_sig, has_multi_tempo
 
-    def midi_to_samples(self):
+    def midi_to_samples(self, ignore_time=True):
         # note_on channel=1 note=44 velocity=127 time=816
         # note_off channel=1 note=44 velocity=64 time=24
 
@@ -75,7 +81,9 @@ class MidiRunner:
                         continue
 
                     note = msg.note - (128 - num_notes) / 2
-                    assert 0 <= note < num_notes, "note out of range"
+                    if not 0 <= note < num_notes:
+                        warnings.warn("note out of range")
+                        continue
 
                     if note not in all_notes:
                         all_notes[note] = []
@@ -106,12 +114,27 @@ class MidiRunner:
                 sample = samples[sample_ix]
                 start_ix = start - sample_ix * samples_per_measure
 
-                end_ix = min(end - sample_ix * samples_per_measure, samples_per_measure)
-                while start_ix < end_ix:
-                    sample[int(start_ix), int(note)] = 1
-                    start_ix += 1
+                if not ignore_time:
+                    end_ix = min(end - sample_ix * samples_per_measure, samples_per_measure)
+                    while start_ix < end_ix:
+                        sample[int(start_ix), int(note)] = 1
+                        start_ix += 1
+                else:
+                    sample[int(start_ix), int(note)]=1
 
         return np.array(samples)
+
+    def save_to_numpy(self,midi_file_path, out_dir):
+        samples = self.midi_to_samples()
+
+        parent_dir_name = str(midi_file_path).replace('\\', '/').split('/')[-2]
+        midi_name = str(midi_file_path).replace('\\', '/').split('/')[-1]
+        output_dir = os.path.join(out_dir, parent_dir_name).replace('\\', '/')
+        os.makedirs(output_dir, exist_ok=True)
+
+        file = f'{output_dir}/{midi_name}_tpb{self.mid.ticks_per_beat}.npy'
+        np.save(file, samples)
+        print(f'Saved {file}')
 
     @staticmethod
     def samples_to_midi(samples, file, ticks_per_beat=48, thresh=0.5):
@@ -145,8 +168,5 @@ class MidiRunner:
 
 
 if __name__ == '__main__':
-    runner = MidiRunner('vgmusic/Nintendo 08 DS/DESTINY.mid')
-    print(runner.ppq, runner.bpm)
-
-    samples = runner.midi_to_samples()
-    runner.samples_to_midi(samples, 'output/DESTINY.mid', ticks_per_beat=runner.mid.ticks_per_beat)
+    runner = MidiRunner('vgmusic/Nintendo 08 DS/Blaze.mid')
+    samples = runner.midi_to_samples(ignore_time=False)
