@@ -31,14 +31,14 @@ if __name__ == '__main__':
     width = 96
     num_samples = 8
     num_epochs = 200
-    batch_size = 4
+    batch_size = 8
     output_dir = 'output'
     h_dim=2048
     z_dim=128
 
     os.makedirs(output_dir, exist_ok=True)
 
-    dataset = nc.SafeDataset(MidiDataset(npy_glob_pattern='vgmusic_npy_point/Nintendo 08 DS/**/*.npy', num_samples=num_samples))
+    dataset = nc.SafeDataset(MidiDataset(npy_glob_pattern='vgmusic_npy/**/*.npy', num_samples=num_samples))
     dataloader = nc.SafeDataLoader(dataset=dataset, batch_size=batch_size, shuffle=True, num_workers=4)
 
     model = model.VAE(num_samples, height, width, h_dim, z_dim).to(device)
@@ -70,10 +70,11 @@ if __name__ == '__main__':
         with torch.no_grad():
             z = torch.randn(batch_size, z_dim).to(device)
             out = model.decode(z)
-            save_sample_images(out, i+1, 'sampled', filter=False)
+            save_sample_images(out, i+1, 'sampled', filter=True)
 
             out = model(x)
             save_sample_images(x, i+1, 'real', filter=True)
-            save_sample_images(x_reconst, i + 1, 'reconst', filter=False)
+            save_sample_images(x_reconst, i + 1, 'reconst', filter=True)
 
-        # torch.save(model, os.path.join(output_dir, 'modelVAE-{}'.format(epoch + 1)))
+        if epoch+1 % 10 == 0:
+            torch.save(model, os.path.join(output_dir, 'modelVAE-{}'.format(epoch + 1)))

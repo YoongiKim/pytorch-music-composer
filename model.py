@@ -124,10 +124,10 @@ class Encoder(nn.Module):
         return x
 
 class Decoder(nn.Module):
-    def __init__(self, n=16, h=96, w=96):
+    def __init__(self, n=16, h=96, w=96, z_dim=128):
         super(Decoder, self).__init__()
         self.n, self.h, self.w = n, h, w
-        self.decoder1 = nn.Sequential(LinearBlock(128, 2048),
+        self.decoder1 = nn.Sequential(LinearBlock(z_dim, 2048),
                                       LinearBlock(2048, 256*n))
         self.decoder2 = nn.Sequential(TimeDistributedLinear(256, 2048))
 
@@ -186,7 +186,7 @@ class VAE(nn.Module):
         self.fc1 = Encoder(n, h, w)
         self.fc2 = nn.Linear(h_dim, z_dim)
         self.fc3 = nn.Linear(h_dim, z_dim)
-        self.fc4 = Decoder(n, h, w)
+        self.fc4 = Decoder(n, h, w, z_dim=z_dim)
         self.fc5 = TimeDistributedLinear(h_dim, h*w, bn=False, activation=nn.Sigmoid)
 
     def encode(self, x):
