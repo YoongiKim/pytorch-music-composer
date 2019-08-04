@@ -10,15 +10,16 @@ import numpy as np
 from glob import glob
 
 LOAD_MODEL = True
-MODEL_PATH = "output/**/params*"
+# MODEL_PATH = "output/**/params*"
+MODEL_PATH = "params*.ckpt"
 
-DATASET_PATH = "data/vgmusic_npy_point/**/*.npy"
+DATASET_PATH = "data/ginko_npy/**/*.npy"
 
 height = 96
 width = 96
 num_samples = 8
-num_epochs = 500
-batch_size = 32
+num_epochs = 1000
+batch_size = 128
 output_dir = 'output'
 h_dim=2048
 z_dim=128
@@ -52,7 +53,7 @@ if __name__ == '__main__':
 
     os.makedirs(output_dir, exist_ok=True)
 
-    dataset = nc.SafeDataset(MidiDataset(npy_glob_pattern=DATASET_PATH, num_samples=num_samples))
+    dataset = nc.SafeDataset(MidiDataset(npy_glob_pattern=DATASET_PATH, num_samples=num_samples, train_step_multiplier=100))
     dataloader = nc.SafeDataLoader(dataset=dataset, batch_size=batch_size, shuffle=True, num_workers=4)
 
     model = model.VAE(num_samples, height, width, h_dim, z_dim)
@@ -77,26 +78,28 @@ if __name__ == '__main__':
             x_reconst, mu, log_var = model(x)
 
             reconst_loss = F.binary_cross_entropy(x_reconst, x, size_average=False) / batch_size
-            kl_div = (- 0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())) / batch_size
+            quantized_reconst_loss = F.binary_cross_entropy((x_reconst>0.5).float(), x, size_average=False) / batch_size
+            kl_div = (-torch.sum(1 + log_var - mu.pow(2) - log_var.exp())) / batch_size
 
-            loss = reconst_loss + kl_div
+            loss = reconst_loss + quantized_reconst_loss + kl_div
             optimizer.zero_grad()
             loss.backward()
             # torch.nn.utils.clip_grad_norm_(model.parameters(), 0.001)
             optimizer.step()
 
-            logger.log(epoch=epoch+1, step=i+1, reconst_loss=reconst_loss.item(), kl_div=kl_div.item())
+            logger.log(epoch=epoch+1, step=i+1, reconst_loss=reconst_loss.item(), q_reconst_loss=quantized_reconst_loss.item(), kl_div=kl_div.item())
 
-        with torch.no_grad():
-            z = torch.randn(batch_size, z_dim).to(device)
-            out = model.decode(z)
-            save_sample_images(out, epoch + 1, i+1, 'sample', filter=True)
-            save_sample_music(out, epoch+1, i+1, 'sample')
+        if epoch % 1 == 0:
+            with torch.no_grad():
+                z = torch.randn(batch_size, z_dim).to(device)
+                out = model.decode(z)
+                save_sample_images(out, epoch + 1, i+1, 'sample', filter=True)
+                save_sample_music(out, epoch+1, i+1, 'sample')
 
-            x_reconst, mu, log_var = model(x)
-            save_sample_images(x, epoch + 1, i+1, 'real', filter=True)
-            save_sample_images(x_reconst, epoch + 1, i + 1, 'reconst', filter=True)
-            save_sample_music(x_reconst, epoch + 1, i + 1, 'reconst')
+                x_reconst, mu, log_var = model(x)
+                save_sample_images(x, epoch + 1, i+1, 'real', filter=True)
+                save_sample_images(x_reconst, epoch + 1, i + 1, 'reconst', filter=True)
+                save_sample_music(x_reconst, epoch + 1, i + 1, 'reconst')
 
         if epoch % 5 == 0:
             torch.save(model.state_dict(), os.path.join(output_dir, 'params-{}.ckpt'.format(epoch + 1)))

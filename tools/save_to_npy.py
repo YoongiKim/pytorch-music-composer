@@ -3,9 +3,10 @@ from modules import midi
 from glob import glob
 from multiprocessing import Pool
 
-OUT_DIR = '../data/vgmusic_npy_point'
-MID_PATTERN = '../data/vgmusic/**/*.mid'
+OUT_DIR = '../data/ginko_npy'
+MID_PATTERN = '../data/Ginko_s_Midi_Storage/**/*.mid'
 
+IGNORE_DURATION = False
 
 def use_multiprocess():
     os.makedirs(OUT_DIR, exist_ok=False)
@@ -29,7 +30,7 @@ def save_to_npy():
 def save_single(midi_file):
     try:
         runner = midi.MidiRunner(midi_file)
-        runner.save_to_numpy(midi_file, OUT_DIR, ignore_time=True)
+        runner.save_to_numpy(midi_file, OUT_DIR, ignore_time=IGNORE_DURATION)
     except Exception as e:
         print(e)
 

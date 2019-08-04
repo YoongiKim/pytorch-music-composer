@@ -6,9 +6,10 @@ except ImportError:
 
 
 class TorchLogger:
-    def __init__(self, total_epoch, total_step):
+    def __init__(self, total_epoch, total_step, summary_writer=None):
         self.total_epoch = total_epoch
         self.total_step = total_step
+        self.writer = summary_writer
 
         self.sum_dict = {}
         self.count_dict = {}
@@ -65,3 +66,7 @@ class TorchLogger:
 
     def print_log(self, epoch, step):
         print(self.get_log_string(epoch, step))
+
+    def update_tensorboard(self, epoch):
+        for i, (key, value) in enumerate(self.avg_dict.items()):
+            self.writer.add_scalar(str(key), value, global_step=epoch)

@@ -143,7 +143,7 @@ class Discriminator(nn.Module):
     def __init__(self, n=16, h=96, w=96):
         super(Discriminator, self).__init__()
         self.encoder = Encoder(n, h, w)
-        self.fc = LinearBlock(2048, 128, activation=nn.Sigmoid)
+        self.fc = LinearBlock(2048, 1, activation=nn.Sigmoid)
 
     def forward(self, x, log=log_empty):
         x = self.encoder(x, log)

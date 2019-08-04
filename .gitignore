@@ -111,3 +111,4 @@ data/vgmusic_npy/*
 data/vgmusic_npy2/
 data/vgmusic_npy_point/*
 output*/
+data/*
