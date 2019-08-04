@@ -1,25 +1,23 @@
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 from torchvision.utils import save_image
-import model
-from model import log, log_empty
-from dataset import MidiDataset
+from modules import model
+from modules.dataset import MidiDataset
 import os
 import nonechucks as nc
-from torch_logger import TorchLogger
+from utils.torch_logger import TorchLogger
 import numpy as np
 from glob import glob
 
 
-def save_sample_images(images, step, name='real_images', filter=True):
+def save_sample_images(images, epoch, step, name='real_images', filter=True):
     if filter:
         images = images > 0.5
     images = images.reshape(-1, 1, num_samples * height, width)
     save_image(images[0:1], os.path.join(output_dir, '{}-{}-{}.png'.format(name, epoch, step)))
 
 def save_sample_music(images, epoch, step):
-    import numpy_to_midi
+    from tools import numpy_to_midi
     images = images.reshape(-1, num_samples, height, width)
     npy_file = os.path.join(output_dir, 'sample-{}-{}.npy'.format(epoch, step))
     np.save(npy_file, images.detach().cpu().numpy()[0])
@@ -47,7 +45,7 @@ if __name__ == '__main__':
 
     os.makedirs(output_dir, exist_ok=True)
 
-    dataset = nc.SafeDataset(MidiDataset(npy_glob_pattern='vgmusic_npy/**/*.npy', num_samples=num_samples))
+    dataset = nc.SafeDataset(MidiDataset(npy_glob_pattern='data/vgmusic_npy/**/*.npy', num_samples=num_samples))
     dataloader = nc.SafeDataLoader(dataset=dataset, batch_size=batch_size, shuffle=True, num_workers=4)
 
     if LOAD_MODEL:
@@ -84,13 +82,13 @@ if __name__ == '__main__':
         with torch.no_grad():
             z = torch.randn(batch_size, z_dim).to(device)
             out = model.decode(z)
-            save_sample_images(out, i+1, 'sampled', filter=True)
+            save_sample_images(out, epoch+1, i+1, 'sampled', filter=True)
 
             save_sample_music(out, epoch+1, i+1)
 
             out = model(x)
             save_sample_images(x, i+1, 'real', filter=True)
-            save_sample_images(x_reconst, i + 1, 'reconst', filter=True)
+            save_sample_images(x_reconst, epoch+1, i + 1, 'reconst', filter=True)
 
         if epoch % 2 == 0:
             torch.save(model, os.path.join(output_dir, 'modelVAE-{}'.format(epoch + 1)))

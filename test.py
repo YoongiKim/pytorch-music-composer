@@ -1,6 +1,6 @@
 #%%
-import midi
-import numpy as np
+from modules import midi
+
 #%%
 file = 'vgmusic/Nintendo 08 DS/Blaze.mid'
 #%%

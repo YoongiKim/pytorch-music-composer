@@ -104,9 +104,9 @@ venv.bak/
 .mypy_cache/
 
 downloads/
-vgmusic/*
-output/
+data/vgmusic/*
+output/*
 .idea/
-vgmusic_npy/*
-vgmusic_npy2/
-vgmusic_npy_point/*
+data/vgmusic_npy/*
+data/vgmusic_npy2/
+data/vgmusic_npy_point/*

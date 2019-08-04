@@ -1,7 +1,6 @@
 import os
-import midi
+from modules import midi
 from glob import glob
-import numpy as np
 
 from multiprocessing import Pool
 

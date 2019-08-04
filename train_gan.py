@@ -1,13 +1,11 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from torchvision.utils import save_image
-import model
-from model import log, log_empty
-from dataset import MidiDataset
+from modules import model
+from modules.dataset import MidiDataset
 import os
 import nonechucks as nc
-from torch_logger import TorchLogger
+from utils.torch_logger import TorchLogger
 import numpy as np
 
 def sample_log(real_images, fake_images):
@@ -18,7 +16,7 @@ def sample_log(real_images, fake_images):
     fake_images = fake_images.reshape(-1, 1, num_samples * height, width)
     save_image(fake_images[0:1], os.path.join(output_dir, 'fake_images-{}-{}.png'.format(epoch + 1, i + 1)))
 
-    import numpy_to_midi
+    from tools import numpy_to_midi
     fake_images = fake_images.reshape(-1, num_samples, height, width)
     npy_file = os.path.join(output_dir, 'sample-{}-{}.npy'.format(epoch + 1, i + 1))
     np.save(npy_file, fake_images.detach().cpu().numpy()[0])
@@ -39,8 +37,8 @@ if __name__ == '__main__':
     dataset = nc.SafeDataset(MidiDataset(npy_glob_pattern='vgmusic_npy/Nintendo 08 DS/**/*.npy', num_samples=num_samples))
     dataloader = nc.SafeDataLoader(dataset=dataset, batch_size=batch_size, shuffle=True, num_workers=4)
 
-    G = model.Generator(input_shape=(height*num_samples, width), output_shape=(height*num_samples, width)).to(device)
-    D = model.Discriminator(input_shape=(height*num_samples, width), output_shape=(1)).to(device)
+    G = model.Generator(input_shape=(height * num_samples, width), output_shape=(height * num_samples, width)).to(device)
+    D = model.Discriminator(input_shape=(height * num_samples, width), output_shape=(1)).to(device)
 
     g_opt = torch.optim.Adam(G.parameters(), lr=0.0002)
     d_opt = torch.optim.Adam(D.parameters(), lr=0.0002)
