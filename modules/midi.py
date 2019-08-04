@@ -10,9 +10,12 @@ import math
 import warnings
 from glob import glob
 import os
+from shutil import copy2
 
 num_notes = 96
 samples_per_measure = 96
+
+filter_channels = [10]
 
 """
 samples data structure
@@ -69,8 +72,10 @@ class MidiRunner:
 
         all_notes = {}
         for track_idx, track in enumerate(self.mid.tracks):
-            abs_time = 0
+            if track_idx in filter_channels:
+                continue
 
+            abs_time = 0
 
             for event_idx, msg in enumerate(track):
                 abs_time += msg.time
@@ -134,6 +139,12 @@ class MidiRunner:
 
         file = f'{output_dir}/{midi_name}_tpb{self.mid.ticks_per_beat}.npy'
         np.save(file, samples)
+
+        # midi_new = f'{output_dir}/{midi_name}_converted.midi'
+        # self.samples_to_midi(samples, midi_new, ticks_per_beat=self.mid.ticks_per_beat)
+        #
+        # copy2(midi_file_path, output_dir)
+
         print(f'Saved {file}')
 
     @staticmethod
@@ -141,6 +152,8 @@ class MidiRunner:
         mid = MidiFile()
         track = MidiTrack()
         mid.tracks.append(track)
+
+        track.append(Message('program_change', program=4))
 
         mid.ticks_per_beat = ticks_per_beat
         ticks_per_measure = 4 * ticks_per_beat
@@ -160,7 +173,7 @@ class MidiRunner:
                         delta_time = abs_time - last_time
                         track.append(Message('note_on', note=note, velocity=127, time=int(delta_time)))
                         last_time = abs_time
-                    elif sample[y, x] >= thresh and (y == sample.shape[0] - 1 or sample[y + 1, x] < thresh):
+                    elif sample[y, x] < thresh and (y == sample.shape[0] - 1 or sample[y - 1, x] > thresh):
                         delta_time = abs_time - last_time
                         track.append(Message('note_off', note=note, velocity=127, time=int(delta_time)))
                         last_time = abs_time
@@ -168,5 +181,6 @@ class MidiRunner:
 
 
 if __name__ == '__main__':
-    runner = MidiRunner('vgmusic/Nintendo 08 DS/Blaze.mid')
+    runner = MidiRunner('../data/vgmusic/Nintendo 08 DS/Blaze.mid')
     samples = runner.midi_to_samples(ignore_time=False)
+    print(samples.shape)

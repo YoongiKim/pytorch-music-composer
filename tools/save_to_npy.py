@@ -1,17 +1,17 @@
 import os
 from modules import midi
 from glob import glob
-
 from multiprocessing import Pool
 
-OUT_DIR = 'vgmusic_npy_point'
-MID_PATTERN = 'vgmusic/Nintendo 08 DS/**/*.mid'
+OUT_DIR = '../data/vgmusic_npy_point'
+MID_PATTERN = '../data/vgmusic/**/*.mid'
+
 
 def use_multiprocess():
     os.makedirs(OUT_DIR, exist_ok=False)
     files = sorted(glob(MID_PATTERN, recursive=True))
 
-    pool = Pool(4)
+    pool = Pool(8)
     pool.map_async(save_single, files)
     pool.close()
     pool.join()
