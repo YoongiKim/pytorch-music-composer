@@ -85,7 +85,7 @@ class MidiRunner:
                     if msg.velocity == 0:
                         continue
 
-                    note = msg.note - (128 - num_notes) / 2
+                    note = int(msg.note - (128 - num_notes) / 2)
                     if not 0 <= note < num_notes:
                         warnings.warn("note out of range")
                         continue
@@ -100,7 +100,9 @@ class MidiRunner:
                     all_notes[note].append([sample_time])
 
                 elif msg.type == 'note_off':
-                    note = msg.note - (128 - num_notes) / 2
+                    note = int(msg.note - (128 - num_notes) / 2)
+                    if note not in all_notes:
+                        continue
                     if len(all_notes[note][-1]) != 1:
                         continue
                     all_notes[note][-1].append(sample_time)
