@@ -171,11 +171,11 @@ class MidiRunner:
                     note = int(x + (128 - num_notes) / 2)
                     if sample[y, x] >= thresh and (y == 0 or sample[y - 1, x] < thresh):
                         delta_time = abs_time - last_time
-                        track.append(Message('note_on', note=note, velocity=127, time=int(delta_time)))
+                        track.append(Message('note_on', note=note, velocity=int(sample[y,x]*127), time=int(delta_time)))
                         last_time = abs_time
                     elif sample[y, x] < thresh and (y == sample.shape[0] - 1 or sample[y - 1, x] > thresh):
                         delta_time = abs_time - last_time
-                        track.append(Message('note_off', note=note, velocity=127, time=int(delta_time)))
+                        track.append(Message('note_off', note=note, velocity=int(sample[y,x]*127), time=int(delta_time)))
                         last_time = abs_time
         mid.save(file)
 
